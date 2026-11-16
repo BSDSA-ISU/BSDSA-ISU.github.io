@@ -203,13 +203,14 @@ drawSpaces();drawSlots();
 
 // ---------- Local file server ----------
 const files=[
- {n:'Python 3.12 installer',c:'Software',mb:28},
- {n:'Visual Studio Code',c:'IDEs',mb:95},
- {n:'XAMPP (Apache, MySQL, PHP)',c:'Software',mb:150},
- {n:'Android Studio',c:'IDEs',mb:1100},
- {n:'Student performance dataset (CSV)',c:'Datasets',mb:240},
- {n:'Image classification dataset',c:'Datasets',mb:2200},
- {n:'Ubuntu 24.04 ISO',c:'Software',mb:5800}
+ {n:'Linux Koishi Kernel',c:'Software',mb:25,local:'x86_64/linux-koishi-6.12.94-0-x86_64.pkg.tar.lz4',online:'https://kernel.org'},
+ {n:'Brave Browser Wayland',c:'Software',mb:32,local:'x86_64/brave-wayland-1-1-x86_64.pkg.tar.lz4',online:'https://brave.com/download/'},
+ {n:'Python 3.12 installer',c:'Software',mb:28,local:'x86_64/python-3.12-installer.exe',online:'https://www.python.org/downloads/'},
+ {n:'Visual Studio Code',c:'IDEs',mb:95,local:'x86_64/vscode_setup.exe',online:'https://code.visualstudio.com/download'},
+ {n:'XAMPP (Apache, MySQL, PHP)',c:'Software',mb:150,local:'x86_64/xampp.run',online:'https://www.apachefriends.org/index.html'},
+ {n:'Android Studio',c:'IDEs',mb:1100,local:'x86_64/android-studio.tar.gz',online:'https://developer.android.com/studio'},
+ {n:'Student performance dataset (CSV)',c:'Datasets',mb:240,local:'x86_64/student_performance.csv',online:'https://archive.ics.uci.edu/dataset/320/student+performance'},
+ {n:'Ubuntu 24.04 ISO',c:'Software',mb:5800,local:'x86_64/ubuntu-24.04.iso',online:'https://releases.ubuntu.com/24.04/'}
 ];
 const cats=['All','Software','IDEs','Datasets'];
 let cat='All';
@@ -224,7 +225,7 @@ function drawFiles(){
 $('cats').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;cat=b.dataset.c;drawFiles()});
 $('q').addEventListener('input',drawFiles);
 let timer;
-$('fileList').addEventListener('click',e=>{
+$('fileList').addEventListener('click',async e=>{
   const b=e.target.closest('[data-n]');if(!b)return;
   const f=files.find(x=>x.n===b.dataset.n);
   const tl=f.mb/lanSpeed,tn=f.mb/netSpeed;
@@ -232,9 +233,36 @@ $('fileList').addEventListener('click',e=>{
   $('tLocal').textContent='About '+dur(tl);$('tNet').textContent='About '+dur(tn);
   $('saved').hidden=true;clearInterval(timer);
   let p=0;$('barLocal').style.width='0';$('barNet').style.width='0';
+  
+  // Check if local file exists
+  let localExists = false;
+  try {
+    const res = await fetch(f.local, { method: 'HEAD' });
+    localExists = res.ok;
+  } catch(err) {
+    localExists = false;
+  }
+
   timer=setInterval(()=>{
     p+=2;$('barLocal').style.width=Math.min(100,p)+'%';$('barNet').style.width=Math.min(100,p*tl/tn)+'%';
-    if(p>=100){clearInterval(timer);$('saved').hidden=false;$('saved').textContent=`The local server finishes ${Math.round(tn/tl)} times faster and uses no outside internet.`}
+    if(p>=100){
+      clearInterval(timer);
+      $('saved').hidden=false;
+      if(localExists) {
+        $('saved').textContent=`Local file found on school server! Downloading from school server (completed ${Math.round(tn/tl)}x faster).`;
+        const a = document.createElement('a');
+        a.href = f.local;
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        $('saved').textContent=`File not found on school server folder. Redirecting to online source: ${f.online}`;
+        setTimeout(() => {
+          window.open(f.online, '_blank');
+        }, 1500);
+      }
+    }
   },25);
 });
 drawFiles();
