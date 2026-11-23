@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Team – Connect &amp; Collaborate</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>Connect &amp; Collaborate</h1>
+  <p>Meet the student developers and researchers behind the IT Department prototype.</p>
+</header>
+
+<nav aria-label="Page navigation">
+  <a href="index.html" class="nav-link" style="margin-left:0;background:var(--tint);color:var(--ink);border-color:var(--line)">&larr; Back to Prototype</a>
+  <a href="Devs.html" class="nav-link active">The Team / Devs</a>
+</nav>
+
+<main>
+  <div class="panel">
+    <h2>Project Development Team</h2>
+    <p class="mute">Meet the BSDSA students who made this prototype possible.</p>
+    <div class="team-grid" id="teamGrid"></div>
+  </div>
+</main>
+
+<footer>
+  Prototype for the Design phase of Project Connect &amp; Collaborate. Hosted via GitHub Pages.
+</footer>
+
+<script>
+// Available theme classes: "dev-theme-1" up to "dev-theme-8"
+const teamMembers = [
+  {
+    theme: "dev-theme-1",
+    badge: "Lead Developer",
+    name: "Cyrus Troy Bazar",
+    username: "@AlieeLinux",
+    pfp: "pfp/patchy.jpg",
+    link: "https://github.com/AlieeLinux",
+    quote: "Satori and Koishi is legal since they're both youkais and way older than me."
+  },
+  {
+    theme: "dev-theme-2",
+    badge: "Project Idea",
+    name: "Cjay Sebastian",
+    username: "@cjay.sebastian.96",
+    pfp: "pfp/Cjay.jpg",
+    link: "https://www.facebook.com/cjay.sebastian.96",
+    quote: "Introvert gang. May hiya pero may tama parin lodi 😶‍🌫️🤟”"
+  },
+  {
+    theme: "dev-theme-3",
+    badge: "Paper Maker",
+    name: "Hays Marayag Jr.",
+    username: "@marayag.hays",
+    pfp: "pfp/Hays.png",
+    link: "https://www.facebook.com/marayag.hays",
+    quote: "Lihim"
+  },
+  {
+    theme: "dev-theme-4",
+    badge: "Bagsak sa pearson",
+    name: "Nelo Malab Cabab",
+    username: "@nelo.cabab.7",
+    pfp: "pfp/Nelo.png",
+    link: "https://www.facebook.com/nelo.cabab.7",
+    quote: "Bagsak nak pearson."
+  },
+  {
+    theme: "dev-theme-5",
+    badge: "",
+    name: "Catlyn Talbo",
+    username: "@Nousername",
+    pfp: "pfp/Talbo.png",
+    link: "https://www.facebook.com/profile.php?id=61592907623986",
+    quote: "Quoteless"
+  }
+];
+
+document.getElementById("teamGrid").innerHTML = teamMembers.map((dev, index) => {
+  const themeClass = dev.theme || `dev-theme-${(index % 8) + 1}`;
+  const badgeHtml = dev.badge ? `<span class="dev-role-badge">${dev.badge}</span>` : "";
+  return `
+    <article class="dev-card ${themeClass}" style="transition-delay: ${(index % 3) * 90}ms">
+      <div class="pfp-wrap">
+        <img class="pfp" src="${dev.pfp}" alt="${dev.name} profile picture" loading="lazy">
+      </div>
+      ${badgeHtml}
+      <h3 class="dev-name">${dev.name}</h3>
+      <div class="dev-handle">${dev.username}</div>
+      <blockquote class="dev-quote">${dev.quote}</blockquote>
+      <a class="dev-link" href="${dev.link}" target="_blank" rel="noopener noreferrer">View Profile &rarr;</a>
+    </article>
+  `;
+}).join("");
+
+// This is the missing part that reveals the cards on scroll
+const observer = new IntersectionObserver((entries, obs) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add("is-visible");
+      setTimeout(() => {
+        entry.target.style.transitionDelay = "0ms";
+      }, 650);
+      obs.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll(".dev-card").forEach(card => observer.observe(card));
+</script>
+
+</body>
+</html>

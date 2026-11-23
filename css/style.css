@@ -497,3 +497,283 @@ footer {
   font-size: 0.82rem;
   border-top: 1px solid var(--line);
 }
+
+/* Append this to the bottom of css/style.css */
+
+.nav-link {
+  margin-left: auto;
+  text-decoration: none;
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid var(--green);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background: var(--green);
+  color: #ffffff;
+}
+
+/* Devs / Team Grid & Scroll Reveal Animations */
+/* Devs / Team Grid & Scroll Reveal Animations */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.dev-card {
+  --c-primary: var(--blue);
+  --c-secondary: var(--green);
+  --c-gradient: linear-gradient(135deg, var(--c-primary), var(--c-secondary));
+  --c-glow: rgba(29, 78, 216, 0.12);
+
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 26px 20px 22px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  /* Scroll-reveal initial state */
+  opacity: 0;
+  transform: translateY(28px) scale(0.97);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* Triggered when card scrolls into view */
+.dev-card.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.dev-card.is-visible:hover {
+  transform: translateY(-5px) scale(1.01);
+  border-color: var(--c-primary);
+  box-shadow: 0 14px 28px -6px var(--c-glow);
+}
+
+.dev-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--c-gradient);
+}
+
+.pfp-wrap {
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  padding: 3.5px;
+  background: var(--c-gradient);
+  margin-bottom: 14px;
+  box-shadow: 0 4px 14px var(--c-glow);
+}
+
+.pfp {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  background: var(--tint);
+  border: 3px solid var(--surface);
+}
+
+.dev-role-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 11px;
+  border-radius: 999px;
+  background: var(--c-gradient);
+  color: #ffffff;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px var(--c-glow);
+}
+
+.dev-name {
+  font-size: 1.18rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--ink);
+}
+
+.dev-handle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--c-primary);
+  margin: 2px 0 12px;
+}
+
+.dev-quote {
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--mute);
+  background: var(--tint);
+  border-left: 3.5px solid var(--c-primary);
+  padding: 10px 12px;
+  border-radius: 0 10px 10px 0;
+  margin: 0 0 16px;
+  width: 100%;
+}
+
+.dev-link {
+  margin-top: auto;
+  display: inline-block;
+  text-decoration: none;
+  background: var(--c-gradient);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px var(--c-glow);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.dev-link:hover {
+  opacity: 0.92;
+  transform: scale(1.03);
+}
+
+/* =========================================================
+   8 UNIQUE MEMBER COLOR CLASSES (dev-theme-1 to dev-theme-8)
+   ========================================================= */
+
+@keyframes pinkPulse {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* 1: Lead Developer — Mostly Pink (80%) + Subtle Crimson Red Accent (20%) */
+/* Smooth continuous scrolling pink-to-red gradient */
+@keyframes pinkFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 1: Lead Developer — Continuously Flowing Pink + Red Accent */
+.dev-theme-1 {
+  --c-primary: #ec4899;
+  --c-secondary: #e11d48;
+  /* Loops smoothly: soft pink -> vibrant pink -> crimson accent -> back to soft pink */
+  --c-gradient: linear-gradient(
+    90deg,
+    #f9a8d4 0%,
+    #f472b6 25%,
+    #ec4899 55%,
+    #e11d48 75%,
+    #ec4899 90%,
+    #f9a8d4 100%
+  );
+  --c-glow: rgba(236, 72, 153, 0.35);
+  border-color: rgba(244, 114, 182, 0.6);
+  background: linear-gradient(180deg, rgba(244, 114, 182, 0.12) 0%, rgba(236, 72, 153, 0.03) 45%, var(--surface) 100%);
+}
+
+/* Animate the top bar, pfp ring, role badge, and profile button */
+.dev-theme-1::before,
+.dev-theme-1 .pfp-wrap,
+.dev-theme-1 .dev-role-badge,
+.dev-theme-1 .dev-link {
+  background-image: var(--c-gradient);
+  background-size: 300% 300%;
+  animation: pinkFlow 3.5s linear infinite;
+}
+
+.dev-theme-1::before {
+  height: 7px;
+}
+
+.dev-theme-1 .pfp-wrap {
+  width: 108px;
+  height: 108px;
+  padding: 4px;
+}
+
+.dev-theme-1 .dev-quote {
+  background: rgba(244, 114, 182, 0.09);
+  border-left-color: #ec4899;
+}
+/* 2: Emerald Green + Teal */
+.dev-theme-2 {
+  --c-primary: #10b981;
+  --c-secondary: #0d9488;
+  --c-glow: rgba(16, 185, 129, 0.18);
+}
+
+/* 3: Royal Blue + Cyan */
+.dev-theme-3 {
+  --c-primary: #2563eb;
+  --c-secondary: #06b6d4;
+  --c-glow: rgba(37, 99, 235, 0.18);
+}
+
+/* 4: Violet + Indigo */
+.dev-theme-4 {
+  --c-primary: #7c3aed;
+  --c-secondary: #4f46e5;
+  --c-glow: rgba(124, 58, 237, 0.18);
+}
+
+/* 5: Amber + Orange */
+.dev-theme-5 {
+  --c-primary: #f59e0b;
+  --c-secondary: #ea580c;
+  --c-glow: rgba(245, 158, 11, 0.18);
+}
+
+/* 6: Lime + Forest Green */
+.dev-theme-6 {
+  --c-primary: #65a30d;
+  --c-secondary: #15803d;
+  --c-glow: rgba(101, 163, 13, 0.18);
+}
+
+/* 7: Sky Blue + Sapphire */
+.dev-theme-7 {
+  --c-primary: #0284c7;
+  --c-secondary: #1d4ed8;
+  --c-glow: rgba(2, 132, 199, 0.18);
+}
+
+/* 8: Coral Red + Warm Rose */
+.dev-theme-8 {
+  --c-primary: #e11d48;
+  --c-secondary: #f97316;
+  --c-glow: rgba(225, 29, 72, 0.18);
+}
+
+/* Respect OS reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .dev-card {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .dev-theme-1::before,
+  .dev-theme-1 .pfp-wrap {
+    animation: none;
+  }
+}
