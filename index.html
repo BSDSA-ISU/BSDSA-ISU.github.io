@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Connect &amp; Collaborate – IT Department Prototype</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>Connect &amp; Collaborate</h1>
+  <p>IT Department prototype: reliable Wi-Fi, local mirror server, and bookable spaces. All figures are sample data.</p>
+</header>
+
+<nav role="tablist" aria-label="Prototype sections">
+  <button role="tab" id="t-wifi" aria-selected="true" aria-controls="p-wifi">Wi-Fi map</button>
+  <button role="tab" id="t-book" aria-selected="false" aria-controls="p-book">Book a space</button>
+  <button role="tab" id="t-files" aria-selected="false" aria-controls="p-files">Local file server</button>
+</nav>
+
+<main>
+  <!-- TAB 1: WI-FI MAP -->
+  <section id="p-wifi" role="tabpanel" aria-labelledby="t-wifi">
+    <div class="grid">
+      <div class="panel">
+        <h2>Wi-Fi speed by room</h2>
+        <p class="mute">Select a room on the floor plan to inspect speed test results.</p>
+        <svg class="plan" id="plan" viewBox="0 0 640 360" role="img" aria-label="Floor plan of the IT Department coloured by Wi-Fi speed"></svg>
+        <div class="legend">
+          <span><i style="background:var(--green)"></i>40+ Mbps (Optimal)</span>
+          <span><i style="background:var(--blue)"></i>15–40 Mbps (Moderate)</span>
+          <span><i style="background:var(--red)"></i>Under 15 Mbps (Dead zone)</span>
+        </div>
+      </div>
+      <div class="panel" id="roomInfo" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- TAB 2: BOOK A SPACE -->
+  <section id="p-book" role="tabpanel" aria-labelledby="t-book" hidden>
+    <div class="grid">
+      <div class="panel">
+        <h2>Reserve a table or lab workstation</h2>
+        <div class="chips" id="spaces" role="group" aria-label="Spaces"></div>
+        <p class="mute" id="spaceNote"></p>
+        <h2 style="margin-top:16px">Today's time slots</h2>
+        <div class="slots" id="slots"></div>
+        <label for="who">Student name or ID</label>
+        <input type="text" id="who" placeholder="e.g. Juan Dela Cruz / 2024-00123">
+        <p style="margin:14px 0 0"><button class="btn" id="bookBtn" disabled>Reserve selected slots</button></p>
+        <div class="toast" id="bookMsg" hidden></div>
+      </div>
+      <div class="panel">
+        <h2>My reservations</h2>
+        <ul class="plain" id="mine"><li class="mute">No reservations yet. Pick a space and a time slot.</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: LOCAL FILE SERVER -->
+  <section id="p-files" role="tabpanel" aria-labelledby="t-files" hidden>
+    <div class="grid">
+      <div class="panel">
+        <h2>Department Mirror (<code>files/</code>)</h2>
+        <p class="mute">Checks local repository folder first; automatically redirects to the official site if not cached locally.</p>
+        <label for="q">Search 50 student &amp; developer packages</label>
+        <input type="search" id="q" placeholder="Search IDEs, languages, databases, office tools, ISOs...">
+        <div class="chips" id="cats" role="group" aria-label="Category"></div>
+        <div class="file-scroll" id="fileList"></div>
+      </div>
+      <div class="panel" aria-live="polite">
+        <h2>Local LAN vs. Internet Speed</h2>
+        <p class="mute" id="dlName">Select any file from the list to test local availability and compare transfer speeds.</p>
+        <div class="mute" style="margin-top:12px">Department LAN Mirror (90 MB/s)</div>
+        <div class="bar"><span id="barLocal"></span></div>
+        <div id="tLocal" class="mute"></div>
+
+        <div class="mute" style="margin-top:14px">Campus Wi-Fi (1.5 MB/s)</div>
+        <div class="bar net"><span id="barNet"></span></div>
+        <div id="tNet" class="mute"></div>
+
+        <div class="toast" id="saved" hidden></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Prototype for the Design phase of Project Connect &amp; Collaborate. Hosted via GitHub Pages.
+</footer>
+
+<script>
+// ---------- Navigation Tabs ----------
+const tabs = [...document.querySelectorAll('[role=tab]')];
+tabs.forEach(t => t.addEventListener('click', () => {
+  tabs.forEach(x => {
+    const on = x === t;
+    x.setAttribute('aria-selected', on);
+    document.getElementById(x.getAttribute('aria-controls')).hidden = !on;
+  });
+}));
+const $ = id => document.getElementById(id);
+
+// ---------- Wi-Fi Map (Green, Blue, Red Theme) ----------
+const rooms = [
+  {n:'Laboratory 1', x:20, y:20, w:200, h:140, mbps:48, drops:1, note:'Good coverage. Access point mounted on the ceiling near the front.'},
+  {n:'Laboratory 2', x:230, y:20, w:200, h:140, mbps:22, drops:6, note:'Signal fades toward the back rows. Downloads often restart.'},
+  {n:'Collaboration room', x:440, y:20, w:180, h:140, mbps:35, drops:3, note:'Usable, but slows when more than 15 students connect.'},
+  {n:'Faculty office', x:20, y:220, w:160, h:120, mbps:55, drops:0, note:'Strongest signal. The main router is located here.'},
+  {n:'Study lounge', x:190, y:220, w:200, h:120, mbps:9, drops:11, note:'Dead zone. Students move to the corridor to download files.'},
+  {n:'Server room', x:400, y:220, w:100, h:120, mbps:60, drops:0, note:'Wired gigabit uplink. Home of the local mirror server.'},
+  {n:'Reading nook', x:510, y:220, w:110, h:120, mbps:12, drops:8, note:'Dead zone behind two concrete walls.'}
+];
+const col = m => m >= 40 ? 'var(--green)' : m >= 15 ? 'var(--blue)' : 'var(--red)';
+const plan = $('plan');
+plan.innerHTML = `<rect x="20" y="170" width="600" height="40" rx="4" fill="var(--tint)" stroke="var(--line)"/><text x="320" y="194" text-anchor="middle" style="font-size:12px;fill:var(--mute);font-weight:600">Main Corridor</text>` +
+rooms.map((r, i) => `<g>
+  <rect class="room" tabindex="0" role="button" aria-label="${r.n}, ${r.mbps} Mbps" data-i="${i}" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="8" fill="${col(r.mbps)}"/>
+  <text class="lbl" x="${r.x + r.w / 2}" y="${r.y + r.h / 2 - 4}" text-anchor="middle">${r.n}</text>
+  <text class="sub" x="${r.x + r.w / 2}" y="${r.y + r.h / 2 + 14}" text-anchor="middle">${r.mbps} Mbps</text>
+</g>`).join('');
+
+function showRoom(i) {
+  const r = rooms[i];
+  document.querySelectorAll('.room').forEach(e => e.classList.toggle('sel', e.dataset.i == i));
+  const s = r.mbps >= 40 ? 'Optimal Coverage' : r.mbps >= 15 ? 'Moderate / Congested' : 'Dead Zone';
+  const fix = r.mbps >= 40 ? 'No hardware changes needed.' : r.mbps >= 15 ? 'Reposition nearest access point or adjust 5GHz channel width.' : 'Install an additional ceiling-mounted access point.';
+  $('roomInfo').innerHTML = `
+    <h2>${r.n}</h2>
+    <div class="big" style="color:${col(r.mbps)}">${r.mbps} Mbps</div>
+    <div class="mute" style="font-weight:600">${s}</div>
+    <dl>
+      <dt>Dropped packets/hr</dt><dd>${r.drops} disconnects</dd>
+      <dt>Observation</dt><dd>${r.note}</dd>
+      <dt>Action plan</dt><dd>${fix}</dd>
+    </dl>
+    <p class="mute" style="margin-top:14px">Dead-zone telemetry is logged for the IT infrastructure upgrade proposal.</p>`;
+}
+plan.addEventListener('click', e => { const t = e.target.closest('.room'); if (t) showRoom(+t.dataset.i); });
+plan.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { const t = e.target.closest('.room'); if (t) { e.preventDefault(); showRoom(+t.dataset.i); } } });
+showRoom(4);
+
+// ---------- Space Booking ----------
+const spaces = [
+  {n:'Collaboration table A', cap:'Seats 6 • Dual HDMI Display', taken:[9,10,14]},
+  {n:'Collaboration table B', cap:'Seats 6 • Whiteboard Wall', taken:[8,13,15,16]},
+  {n:'Study lounge table', cap:'Seats 4 • Quiet Zone', taken:[11,12]},
+  {n:'Lab 1, PC 07', cap:'Ryzen 7 / 32GB RAM Workstation', taken:[8,9,10,11,13]},
+  {n:'Lab 2, PC 12', cap:'Linux / Docker Workstation', taken:[14,15]}
+];
+const hours = [8,9,10,11,12,13,14,15,16,17];
+const fmt = h => `${h % 12 || 12}:00 ${h < 12 ? 'AM' : 'PM'}`;
+let cur = 0, pick = new Set(), mine = [];
+
+function drawSpaces() {
+  $('spaces').innerHTML = spaces.map((s, i) => `<button class="chip" aria-pressed="${i === cur}" data-i="${i}">${s.n}</button>`).join('');
+  $('spaceNote').textContent = spaces[cur].cap;
+}
+function drawSlots() {
+  const s = spaces[cur];
+  const bookedMine = mine.filter(m => m.space === cur).map(m => m.h);
+  $('slots').innerHTML = hours.map(h => {
+    const t = s.taken.includes(h) || bookedMine.includes(h);
+    return `<button class="slot" data-h="${h}" ${t ? 'disabled' : ''} aria-pressed="${pick.has(h)}">${fmt(h)}</button>`;
+  }).join('');
+  $('bookBtn').disabled = !pick.size || !$('who').value.trim();
+}
+function drawMine() {
+  $('mine').innerHTML = mine.length
+    ? mine.map((m, i) => `<li><b>${spaces[m.space].n}</b><span class="mute">${fmt(m.h)} today • ${m.who}</span><br><button class="btn alt" data-c="${i}" style="margin-top:8px;padding:5px 10px;font-size:0.8rem">Cancel</button></li>`).join('')
+    : '<li class="mute">No reservations yet. Pick a space and a time slot.</li>';
+}
+$('spaces').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cur = +b.dataset.i; pick.clear(); $('bookMsg').hidden = true; drawSpaces(); drawSlots(); });
+$('slots').addEventListener('click', e => { const b = e.target.closest('.slot'); if (!b || b.disabled) return; const h = +b.dataset.h; pick.has(h) ? pick.delete(h) : pick.add(h); drawSlots(); });
+$('who').addEventListener('input', drawSlots);
+$('bookBtn').addEventListener('click', () => {
+  const who = $('who').value.trim();
+  [...pick].sort((a, b) => a - b).forEach(h => mine.push({space: cur, h, who}));
+  $('bookMsg').hidden = false;
+  $('bookMsg').textContent = `Reserved ${spaces[cur].n} for ${pick.size} slot${pick.size > 1 ? 's' : ''}. Show this confirmation at the IT desk.`;
+  pick.clear(); drawSlots(); drawMine();
+});
+$('mine').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; mine.splice(+b.dataset.c, 1); $('bookMsg').hidden = true; drawSlots(); drawMine(); });
+drawSpaces(); drawSlots();
+
+// ---------- 50 Student & IT Tools (Local files/ Check + Official Website Fallback) ----------
+const files = [
+  // IDEs & Editors (10)
+  {n:'Visual Studio Code', c:'IDEs & Editors', mb:95, local:'files/VSCodeUserSetup-x64.exe', online:'https://code.visualstudio.com/download'},
+  {n:'IntelliJ IDEA Community', c:'IDEs & Editors', mb:780, local:'files/ideaIC-2025.1.exe', online:'https://www.jetbrains.com/idea/download/'},
+  {n:'PyCharm Community Edition', c:'IDEs & Editors', mb:540, local:'files/pycharm-community.exe', online:'https://www.jetbrains.com/pycharm/download/'},
+  {n:'Android Studio', c:'IDEs & Editors', mb:1150, local:'files/android-studio-ide.exe', online:'https://developer.android.com/studio'},
+  {n:'Eclipse IDE for Java', c:'IDEs & Editors', mb:340, local:'files/eclipse-java-win64.zip', online:'https://www.eclipse.org/downloads/'},
+  {n:'Apache NetBeans', c:'IDEs & Editors', mb:460, local:'files/Apache-NetBeans-win-x64.exe', online:'https://netbeans.apache.org/front/main/download/'},
+  {n:'Sublime Text 4', c:'IDEs & Editors', mb:22, local:'files/sublime_text_build_x64_setup.exe', online:'https://www.sublimetext.com/download'},
+  {n:'Notepad++', c:'IDEs & Editors', mb:5, local:'files/npp.Installer.x64.exe', online:'https://notepad-plus-plus.org/downloads/'},
+  {n:'Code::Blocks (with MinGW)', c:'IDEs & Editors', mb:145, local:'files/codeblocks-mingw-setup.exe', online:'https://www.codeblocks.org/downloads/binaries/'},
+  {n:'Arduino IDE 2', c:'IDEs & Editors', mb:180, local:'files/arduino-ide_Win_64bit.exe', online:'https://www.arduino.cc/en/software'},
+
+  // Languages & Runtimes (10)
+  {n:'Python 3.12 (64-bit)', c:'Languages', mb:28, local:'files/python-3.12-amd64.exe', online:'https://www.python.org/downloads/'},
+  {n:'Node.js LTS (v22)', c:'Languages', mb:32, local:'files/node-v22-x64.msi', online:'https://nodejs.org/en/download'},
+  {n:'OpenJDK 21 (Eclipse Temurin)', c:'Languages', mb:195, local:'files/OpenJDK21U-jdk_x64_windows.msi', online:'https://adoptium.net/'},
+  {n:'.NET 8.0 SDK', c:'Languages', mb:210, local:'files/dotnet-sdk-8.0-win-x64.exe', online:'https://dotnet.microsoft.com/en-us/download'},
+  {n:'Go (Golang) Compiler', c:'Languages', mb:72, local:'files/go1.23.windows-amd64.msi', online:'https://go.dev/dl/'},
+  {n:'Rust (rustup-init)', c:'Languages', mb:14, local:'files/rustup-init.exe', online:'https://www.rust-lang.org/tools/install'},
+  {n:'MinGW-w64 (GCC / G++)', c:'Languages', mb:68, local:'files/mingw-w64-x86_64.zip', online:'https://www.mingw-w64.org/downloads/'},
+  {n:'Anaconda Distribution', c:'Languages', mb:920, local:'files/Anaconda3-Windows-x86_64.exe', online:'https://www.anaconda.com/download'},
+  {n:'R Statistical Computing', c:'Languages', mb:84, local:'files/R-4.4-win.exe', online:'https://cran.r-project.org/bin/windows/base/'},
+  {n:'RStudio Desktop', c:'Languages', mb:225, local:'files/RStudio-2025.exe', online:'https://posit.co/download/rstudio-desktop/'},
+
+  // Databases & Web Servers (10)
+  {n:'XAMPP (Apache, MariaDB, PHP)', c:'Databases & Web', mb:155, local:'files/xampp-windows-x64.exe', online:'https://www.apachefriends.org/download.html'},
+  {n:'Laragon Full', c:'Databases & Web', mb:170, local:'files/laragon-wamp.exe', online:'https://laragon.org/download/'},
+  {n:'MySQL Community Server', c:'Databases & Web', mb:310, local:'files/mysql-installer-community.msi', online:'https://dev.mysql.com/downloads/installer/'},
+  {n:'PostgreSQL 17', c:'Databases & Web', mb:365, local:'files/postgresql-17-windows-x64.exe', online:'https://www.postgresql.org/download/'},
+  {n:'MongoDB Community Server', c:'Databases & Web', mb:510, local:'files/mongodb-windows-x86_64.msi', online:'https://www.mongodb.com/try/download/community'},
+  {n:'MongoDB Compass GUI', c:'Databases & Web', mb:135, local:'files/mongodb-compass-win32-x64.exe', online:'https://www.mongodb.com/try/download/compass'},
+  {n:'DBeaver Community', c:'Databases & Web', mb:115, local:'files/dbeaver-ce-latest-x86_64-setup.exe', online:'https://dbeaver.io/download/'},
+  {n:'Postman API Client', c:'Databases & Web', mb:160, local:'files/Postman-win64-Setup.exe', online:'https://www.postman.com/downloads/'},
+  {n:'Docker Desktop', c:'Databases & Web', mb:580, local:'files/Docker-Desktop-Installer.exe', online:'https://www.docker.com/products/docker-desktop/'},
+  {n:'SQLite Studio', c:'Databases & Web', mb:38, local:'files/sqlitestudio-3.4.zip', online:'https://sqlitestudio.pl/'},
+
+  // Networking, Git & Virtualization (10)
+  {n:'Git for Windows', c:'DevOps & Network', mb:64, local:'files/Git-64-bit.exe', online:'https://git-scm.com/downloads'},
+  {n:'GitHub Desktop', c:'DevOps & Network', mb:125, local:'files/GitHubDesktopSetup-x64.exe', online:'https://desktop.github.com/'},
+  {n:'Wireshark Packet Analyzer', c:'DevOps & Network', mb:82, local:'files/Wireshark-win64.exe', online:'https://www.wireshark.org/download.html'},
+  {n:'Cisco Packet Tracer', c:'DevOps & Network', mb:320, local:'files/CiscoPacketTracer_822_Windows_64bit.exe', online:'https://www.netacad.com/resources/lab-downloads'},
+  {n:'PuTTY SSH & Telnet Client', c:'DevOps & Network', mb:4, local:'files/putty-64bit-installer.msi', online:'https://www.putty.org/'},
+  {n:'FileZilla FTP Client', c:'DevOps & Network', mb:12, local:'files/FileZilla_win64-setup.exe', online:'https://filezilla-project.org/download.php?type=client'},
+  {n:'Oracle VM VirtualBox', c:'DevOps & Network', mb:108, local:'files/VirtualBox-Win.exe', online:'https://www.virtualbox.org/wiki/Downloads'},
+  {n:'Ubuntu 24.04.2 LTS ISO', c:'DevOps & Network', mb:5800, local:'files/ubuntu-24.04.2-desktop-amd64.iso', online:'https://ubuntu.com/download/desktop'},
+  {n:'Kali Linux Installer ISO', c:'DevOps & Network', mb:4100, local:'files/kali-linux-installer-amd64.iso', online:'https://www.kali.org/get-kali/'},
+  {n:'Rufus Bootable USB Tool', c:'DevOps & Network', mb:2, local:'files/rufus-4.6.exe', online:'https://rufus.ie/en/'},
+
+  // Productivity, Design & Study Tools (10)
+  {n:'LibreOffice Suite', c:'Productivity & Design', mb:345, local:'files/LibreOffice_Win_x86-64.msi', online:'https://www.libreoffice.org/download/download-libreoffice/'},
+  {n:'7-Zip File Archiver', c:'Productivity & Design', mb:2, local:'files/7z2409-x64.exe', online:'https://www.7-zip.org/download.html'},
+  {n:'VLC Media Player', c:'Productivity & Design', mb:42, local:'files/vlc-win64.exe', online:'https://www.videolan.org/vlc/'},
+  {n:'OBS Studio', c:'Productivity & Design', mb:130, local:'files/OBS-Studio-Windows-Installer.exe', online:'https://obsproject.com/download'},
+  {n:'Blender 3D Creation Suite', c:'Productivity & Design', mb:330, local:'files/blender-windows-x64.msi', online:'https://www.blender.org/download/'},
+  {n:'GIMP Image Editor', c:'Productivity & Design', mb:295, local:'files/gimp-setup.exe', online:'https://www.gimp.org/downloads/'},
+  {n:'Figma Desktop App', c:'Productivity & Design', mb:110, local:'files/FigmaSetup.exe', online:'https://www.figma.com/downloads/'},
+  {n:'Obsidian Markdown Notes', c:'Productivity & Design', mb:75, local:'files/Obsidian.exe', online:'https://obsidian.md/download'},
+  {n:'Zotero Reference Manager', c:'Productivity & Design', mb:62, local:'files/Zotero_win-x64_setup.exe', online:'https://www.zotero.org/download/'},
+  {n:'draw.io (diagrams.net) Desktop', c:'Productivity & Design', mb:98, local:'files/draw.io-windows-installer.exe', online:'https://github.com/jgraph/drawio-desktop/releases'}
+];
+
+const cats = ['All', 'IDEs & Editors', 'Languages', 'Databases & Web', 'DevOps & Network', 'Productivity & Design'];
+let cat = 'All';
+const netSpeed = 1.5, lanSpeed = 90; // MB/s
+const dur = s => s < 60 ? Math.max(1, Math.round(s)) + ' sec' : Math.round(s / 60) + ' min';
+
+function drawFiles() {
+  $('cats').innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${c}">${c}</button>`).join('');
+  const q = $('q').value.toLowerCase();
+  const list = files.filter(f => (cat === 'All' || f.c === cat) && (f.n.toLowerCase().includes(q) || f.c.toLowerCase().includes(q)));
+  $('fileList').innerHTML = list.length
+    ? list.map(f => `
+      <div class="file">
+        <div>
+          <b>${f.n}</b>
+          <span class="badge">${f.c}</span>
+          <span class="mute">${f.mb >= 1000 ? (f.mb / 1000).toFixed(1) + ' GB' : f.mb + ' MB'} • <code>${f.local}</code></span>
+        </div>
+        <button class="btn" data-n="${f.n}">Download</button>
+      </div>`).join('')
+    : '<p class="mute">No packages match your search. Try another keyword or category.</p>';
+}
+
+$('cats').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; cat = b.dataset.c; drawFiles(); });
+$('q').addEventListener('input', drawFiles);
+
+let timer;
+$('fileList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-n]');
+  if (!b) return;
+  const f = files.find(x => x.n === b.dataset.n);
+  const tl = f.mb / lanSpeed, tn = f.mb / netSpeed;
+
+  $('dlName').textContent = `${f.n} (${f.mb >= 1000 ? (f.mb / 1000).toFixed(1) + ' GB' : f.mb + ' MB'})`;
+  $('tLocal').textContent = 'Estimated LAN time: ~' + dur(tl);
+  $('tNet').textContent = 'Estimated Wi-Fi time: ~' + dur(tn);
+  $('saved').hidden = true;
+  $('saved').className = 'toast';
+  clearInterval(timer);
+
+  let p = 0;
+  $('barLocal').style.width = '0';
+  $('barNet').style.width = '0';
+
+  // Verify if the file actually exists inside files/ on GitHub Pages / local server
+  let localExists = false;
+  try {
+    const res = await fetch(f.local, { method: 'HEAD', cache: 'no-store' });
+    // Ensure HTTP 200 OK and make sure GitHub Pages didn't return an HTML 404 page
+    const contentType = res.headers.get('content-type') || '';
+    localExists = res.ok && !contentType.includes('text/html');
+  } catch (err) {
+    localExists = false;
+  }
+
+  timer = setInterval(() => {
+    p += 4;
+    $('barLocal').style.width = Math.min(100, p) + '%';
+    $('barNet').style.width = Math.min(100, p * tl / tn) + '%';
+
+    if (p >= 100) {
+      clearInterval(timer);
+      $('saved').hidden = false;
+
+      if (localExists) {
+        $('saved').textContent = `Found in ${f.local}! Starting local download (${Math.round(tn / tl)}x faster than Wi-Fi).`;
+        const a = document.createElement('a');
+        a.href = f.local;
+        a.setAttribute('download', '');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        $('saved').classList.add('fallback');
+        $('saved').innerHTML = `Not cached in <code>${f.local}</code>. Redirecting to official download page: <a href="${f.online}" target="_blank" rel="noopener noreferrer" style="color:inherit;font-weight:700">${f.online}</a>`;
+        setTimeout(() => {
+          window.open(f.online, '_blank', 'noopener,noreferrer');
+        }, 1200);
+      }
+    }
+  }, 25);
+});
+
+drawFiles();
+</script>
+</body>
+</html>

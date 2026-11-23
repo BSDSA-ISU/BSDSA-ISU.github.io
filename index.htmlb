@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to BSDSA</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="nav-container">
+
+        <div class="logo">
+            <img src="./logo.jpeg" style="border-radius: 50%;" alt="BSDSA Logo">
+            <span>BSDSA ISU</span>
+        </div>
+
+        <div class="dropdown">
+            <button class="dropbtn">Menu</button>
+            <div class="dropdown-content">
+                <a href="index.html">Home</a>
+                <a href="https://github.com/BSDSA-ISU" target="_blank">GitHub Org</a>
+                <a href="https://funami.tech" target="_blank">inspired by Funami Tech</a>
+            </div>
+        </div>
+
+    </div>
+</nav>
+
+<!-- HERO -->
+<div class="container hero-wrapper">
+
+    <section class="hero">
+        <h1>Welcome to BSDSA</h1>
+        <p style="color: var(--muted); margin-top: 10px;">
+            Data Science • Programming • Analytics • Chaos (sometimes)
+        </p>
+        <img src="./logo.jpeg" style="border-radius: 50%;">
+        <p style="color: gray;">Kaguya Says hello!!!</p>
+        <br>
+        <p style="color: brown;">note: This is not paid propaganda</p>
+    </section>
+
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+
+    <!-- ABOUT -->
+    <div class="card instruction-box">
+        <h2>About this course</h2>
+        <p>
+            BSDSA is a course within the CCSICT department that focuses on analyzing,
+            interpreting, and visualizing data.
+        </p>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="footer-bottom">
+        BSDSA ISU • Built with chaos and caffeine
+    </div>
+</footer>
+
+</body>
+</html>
